@@ -1,7 +1,7 @@
 ---
 output: html_document
 ---
-## Assessment of severe weather impact using data in the NOAA Storm Database"
+## Assessment of severe weather impact using data in the NOAA Storm Database
   
 ---
   
