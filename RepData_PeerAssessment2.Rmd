@@ -18,15 +18,14 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ### Synopsis
 ```{r synopsis, include = FALSE, echo = FALSE, ref.label = c("loadData", "convDates", "updateValues", "deaths", "injuries", "economic")}
 ```
-The NOAA storm database is an official publication of the National Oceanic and Atmospheric Administration (NOAA).  It holds data relating to storm events which have been registered between `r format(min(sData$BGN_DATE, na.rm = TRUE),"%B %Y")` and `r format(max(sData$END_DATE, na.rm = TRUE),"%B %Y")`.  
+The NOAA storm database is an official publication of the National Oceanic and Atmospheric Administration (NOAA).  It holds data relating to storm events which have been registered between January 1950 and November 2011.  
   
-This analysis focuses upon the most serious recorded storm events in relation to their population health and economic consequences.  
-  
+This analysis focuses upon the most serious recorded storm events in relation to their health and economic consequences.     
 Headlines derived from the dataset are:  
   
 * Most deaths are caused by the event **`r head(mostDeaths$EVTYPE, 1)`**, which accounts for `r sprintf("%.1f%%", 100 * head(mostDeaths$pc, 1))` of all recorded storm deaths (`r format(head(mostDeaths$tDeaths, 1), big.mark = ",")` deaths).  
 * Most injuries are caused by the event **`r head(mostInjuries$EVTYPE, 1)`**, which accounts for `r sprintf("%.1f%%", 100 * head(mostInjuries$pc, 1))` of all recorded injuries (`r format(head(mostInjuries$tInjuries, 1), big.mark = ",")` injuries).  
-* The most economic damage is caused by the event **`r head(mostEcon$EVTYPE, 1)`**, which accounts for `r sprintf("%.1f%%", 100 * head(mostEcon$pc, 1))` of all recorded damage (`r dollar(round(head(mostEcon$tEcon, 1),1), big.mark = ",")` billion).  
+* The most economic damage is caused by the event **`r head(mostEcon$EVTYPE, 1)`**, which accounts for `r sprintf("%.1f%%", 100 * head(mostEcon$pc, 1))` of material recorded damage (`r dollar(round(head(mostEcon$tEcon, 1),1), big.mark = ",")` billion).  
   
 ### Data Processing
 
@@ -54,14 +53,14 @@ sData$BGN_DATE <- strptime(sData$BGN_DATE, "%m/%d/%Y %H:%M:%S")
 sData$END_DATE <- strptime(sData$END_DATE, "%m/%d/%Y %H:%M:%S")
 ```  
   
-Convert the damage values so they all take the multipliers into consideration and resolve to a $million value.  
+Convert the damage values so they take the clearly distinguishable material multipliers ("H", "K", "M", "B", covering a range of hundreds to billions of dollars) into consideration and resolve to a $billion value for later aggregation.  
   
 ```{r updateValues}
-upVal <- data.frame(PROPDMGEXP = c("K", "M", "B"), multP = c(1000, 1000000, 1000000000))
+upVal <- data.frame(PROPDMGEXP = c("H", "K", "M", "B"), multP = c(100, 1000, 1000000, 1000000000))
 sData <- merge(sData, upVal, by = "PROPDMGEXP")
 sData$PROPDMG_M <- (sData$PROPDMG * sData$multP)/1000000000
 
-upVal <- data.frame(CROPDMGEXP = c("K", "M", "B"), multC = c(1000, 1000000, 1000000000))
+upVal <- data.frame(CROPDMGEXP = c("H", "K", "M", "B"), multC = c(100, 1000, 1000000, 1000000000))
 sData <- merge(sData, upVal, by = "CROPDMGEXP")
 sData$CROPDMG_M <- (sData$CROPDMG * sData$multC)/1000000000
 
@@ -103,7 +102,7 @@ ggplot(mostDeaths, aes(x = reorder(EVTYPE, desc(tDeaths)), y = tDeaths, fill = E
   
 The top 10 events account for `r sprintf("%.1f%%", 100 * sum(mostDeaths$pc))` of all recorded deaths in the dataset.  The most serious event is `r head(mostDeaths$EVTYPE, 1)` which is responsible for `r sprintf("%.1f%%", 100 * head(mostDeaths$pc, 1))` of deaths.
   
-Then we can derive a set of data to show us the 10 *EVTYPE* values that are associated to the highest number of deaths, as recorded in the *INJURIES* field.
+Then we can derive a set of data to show us the 10 *EVTYPE* values that are associated to the highest number of injuries, as recorded in the *INJURIES* field.
   
 ```{r injuries}
 allInjuries <- sum(sData$INJURIES, na.rm = TRUE)
@@ -135,7 +134,7 @@ Economic losses are quantified in the dataset by reference to the following:
   
 Multipliers are contained in the dataset which indicate whether the recorded costs are in thousands, millions or billions.  Other values are contained in the dataset but have been ignored for the purposes of this analysis.  
   
-Where a multiplier is available it has been used to derive cost in billions  Property and crop damage has been added together to derive total damage. No adjustments have been made for inflation.
+Where a multiplier is available it has been used to derive the cost in $billion. Property and crop damage has been added together to derive **total** damage. No adjustments have been made for inflation.
   
 ```{r economic}
 require(scales)
